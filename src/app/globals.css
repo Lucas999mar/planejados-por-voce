@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@theme {
+  --color-wood-50: #faf6f1;
+  --color-wood-100: #f0e6d6;
+  --color-wood-200: #e2cfb3;
+  --color-wood-300: #d4b88f;
+  --color-wood-400: #c49a67;
+  --color-wood-500: #b47d45;
+  --color-wood-600: #9a6738;
+  --color-wood-700: #7d522d;
+  --color-wood-800: #5e3d22;
+  --color-wood-900: #3f2917;
+
+  --color-accent-50: #eafaf0;
+  --color-accent-100: #c8f0d5;
+  --color-accent-200: #95e0ad;
+  --color-accent-300: #5ccc82;
+  --color-accent-400: #38b566;
+  --color-accent-500: #2d6a4f;
+  --color-accent-600: #255a42;
+  --color-accent-700: #1d4a36;
+  --color-accent-800: #153a2a;
+  --color-accent-900: #0d2a1e;
+
+  --color-gold-50: #fdf8f0;
+  --color-gold-100: #f9ecd6;
+  --color-gold-200: #f0d8ad;
+  --color-gold-300: #e6c384;
+  --color-gold-400: #d4a574;
+  --color-gold-500: #c4914a;
+  --color-gold-600: #a87a3d;
+  --color-gold-700: #8c6330;
+  --color-gold-800: #704c23;
+  --color-gold-900: #543516;
+
+  --color-dark-50: #f0f0f5;
+  --color-dark-100: #d1d1e0;
+  --color-dark-200: #a3a3c0;
+  --color-dark-300: #7575a0;
+  --color-dark-400: #474780;
+  --color-dark-500: #2a2a5a;
+  --color-dark-600: #22224a;
+  --color-dark-700: #1a1a3a;
+  --color-dark-800: #12122a;
+  --color-dark-900: #0a0a1a;
+
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-body);
+  color: #1a1a2e;
+  background: #faf8f5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* WhatsApp float animation */
+@keyframes pulse-whatsapp {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 4px 30px rgba(37, 211, 102, 0.6); }
+}
+
+.whatsapp-float {
+  animation: pulse-whatsapp 2s ease-in-out infinite;
+}
+
+/* Chat bubble animation */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-bubble {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #8B4513, #D4A574);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d4a574;
+  border-radius: 3px;
+}
+
+/* Section padding consistent */
+.section-padding {
+  padding: 5rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .section-padding {
+    padding: 6rem 2rem;
+  }
+}
