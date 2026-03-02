@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppFloat from "@/components/layout/WhatsAppFloat";
 import ChatWidget from "@/components/chat/ChatWidget";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -50,6 +51,7 @@ export default function RootLayout({
         <Footer />
         <WhatsAppFloat />
         <ChatWidget />
+        <SpeedInsights />
       </body>
     </html>
   );
