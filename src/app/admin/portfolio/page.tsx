@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Pencil, Trash2, Upload, X, Loader2, Save, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X, Loader2, Save, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -9,6 +9,7 @@ interface Project {
     titulo: string;
     descricao: string;
     imagem_url: string;
+    imagens: string[];
     ordem: number;
     ativo: boolean;
 }
@@ -26,14 +27,17 @@ export default function AdminPortfolioPage() {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [uploadingGallery, setUploadingGallery] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
 
     const [form, setForm] = useState({
         ambiente: 'Cozinha',
         titulo: '',
         descricao: '',
         imagem_url: '',
+        imagens: [] as string[],
         ordem: 0,
     });
 
@@ -44,20 +48,30 @@ export default function AdminPortfolioPage() {
         try {
             const res = await fetch('/api/admin/portfolio');
             const data = await res.json();
-            setProjects(Array.isArray(data) ? data : []);
+            setProjects(Array.isArray(data) ? data.map((p: any) => ({
+                ...p,
+                imagens: Array.isArray(p.imagens) ? p.imagens : [],
+            })) : []);
         } catch (e) { console.error(e); }
         setLoading(false);
     }
 
     function openNew() {
         setEditingProject(null);
-        setForm({ ambiente: 'Cozinha', titulo: '', descricao: '', imagem_url: '', ordem: projects.length });
+        setForm({ ambiente: 'Cozinha', titulo: '', descricao: '', imagem_url: '', imagens: [], ordem: projects.length });
         setShowModal(true);
     }
 
     function openEdit(p: Project) {
         setEditingProject(p);
-        setForm({ ambiente: p.ambiente, titulo: p.titulo, descricao: p.descricao, imagem_url: p.imagem_url, ordem: p.ordem });
+        setForm({
+            ambiente: p.ambiente,
+            titulo: p.titulo,
+            descricao: p.descricao,
+            imagem_url: p.imagem_url,
+            imagens: Array.isArray(p.imagens) ? p.imagens : [],
+            ordem: p.ordem,
+        });
         setShowModal(true);
     }
 
@@ -117,6 +131,32 @@ export default function AdminPortfolioPage() {
         setUploading(false);
     }
 
+    async function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        setUploadingGallery(true);
+        try {
+            const newUrls: string[] = [];
+            for (let i = 0; i < files.length; i++) {
+                const fd = new FormData();
+                fd.append('file', files[i]);
+                const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.url) newUrls.push(data.url);
+            }
+            setForm(prev => ({ ...prev, imagens: [...prev.imagens, ...newUrls] }));
+        } catch (e) { console.error(e); }
+        setUploadingGallery(false);
+        if (galleryInputRef.current) galleryInputRef.current.value = '';
+    }
+
+    function removeGalleryImage(index: number) {
+        setForm(prev => ({
+            ...prev,
+            imagens: prev.imagens.filter((_, i) => i !== index),
+        }));
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full min-h-[50vh]">
@@ -134,7 +174,7 @@ export default function AdminPortfolioPage() {
                 </div>
                 <button
                     onClick={openNew}
-                    className="flex items-center gap-2 bg-wood-600 hover:bg-wood-500 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors"
+                    className="flex items-center gap-2 bg-wood-600 hover:bg-wood-500 text-white px-5 py-3 rounded-xl font-semibold text-sm transition-colors shadow-lg"
                 >
                     <Plus size={18} />
                     Novo Projeto
@@ -155,6 +195,12 @@ export default function AdminPortfolioPage() {
                             )}
                             {!p.ativo && (
                                 <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">Inativo</div>
+                            )}
+                            {p.imagens && p.imagens.length > 0 && (
+                                <div className="absolute top-2 right-2 bg-wood-600 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <ImageIcon size={10} />
+                                    +{p.imagens.length} fotos
+                                </div>
                             )}
                         </div>
                         <div className="p-4 space-y-2">
@@ -211,17 +257,17 @@ export default function AdminPortfolioPage() {
             {/* Add/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-dark-800 rounded-2xl max-w-lg w-full border border-dark-600 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <div className="p-6 border-b border-dark-600 flex items-center justify-between">
+                    <div className="bg-dark-800 rounded-2xl max-w-2xl w-full border border-dark-600 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 border-b border-dark-600 flex items-center justify-between sticky top-0 bg-dark-800 z-10">
                             <h3 className="text-white font-heading font-semibold text-lg">
                                 {editingProject ? 'Editar Projeto' : 'Novo Projeto'}
                             </h3>
                             <button onClick={() => setShowModal(false)} className="text-dark-400 hover:text-white"><X size={20} /></button>
                         </div>
-                        <div className="p-6 space-y-4">
-                            {/* Image */}
+                        <div className="p-6 space-y-5">
+                            {/* Main Image */}
                             <div>
-                                <label className="text-dark-200 text-sm font-medium block mb-2">Imagem</label>
+                                <label className="text-dark-200 text-sm font-medium block mb-2">Imagem Principal</label>
                                 {form.imagem_url ? (
                                     <div className="relative rounded-xl overflow-hidden bg-dark-700 aspect-[4/3]">
                                         <img src={form.imagem_url} alt="" className="w-full h-full object-cover" />
@@ -255,13 +301,68 @@ export default function AdminPortfolioPage() {
                                     onChange={handleUpload}
                                     className="hidden"
                                 />
-                                {/* Or paste URL */}
                                 <input
                                     type="text"
                                     value={form.imagem_url}
                                     onChange={e => setForm(prev => ({ ...prev, imagem_url: e.target.value }))}
                                     placeholder="Ou cole a URL da imagem..."
                                     className="mt-2 w-full bg-dark-700 border border-dark-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-dark-400 focus:border-wood-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Gallery Images */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-dark-200 text-sm font-medium">Galeria de Fotos</label>
+                                    <span className="text-dark-400 text-xs">{form.imagens.length} fotos adicionais</span>
+                                </div>
+                                <p className="text-dark-500 text-xs mb-3">Adicione mais fotos deste ambiente para seus clientes visualizarem</p>
+
+                                {/* Gallery grid */}
+                                {form.imagens.length > 0 && (
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+                                        {form.imagens.map((url, index) => (
+                                            <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-dark-700 group">
+                                                <img src={url} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                                                <button
+                                                    onClick={() => removeGalleryImage(index)}
+                                                    className="absolute top-1 right-1 bg-red-600/90 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                                <div className="absolute bottom-1 left-1 bg-dark-900/70 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                                    {index + 1}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Upload more button */}
+                                <button
+                                    onClick={() => galleryInputRef.current?.click()}
+                                    disabled={uploadingGallery}
+                                    className="w-full border-2 border-dashed border-dark-500 rounded-xl p-4 text-center cursor-pointer hover:border-wood-500 transition-colors"
+                                >
+                                    {uploadingGallery ? (
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Loader2 size={18} className="animate-spin text-wood-500" />
+                                            <span className="text-dark-300 text-sm">Enviando fotos...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Plus size={18} className="text-dark-400" />
+                                            <span className="text-dark-300 text-sm">Adicionar mais fotos</span>
+                                        </div>
+                                    )}
+                                </button>
+                                <input
+                                    ref={galleryInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleGalleryUpload}
+                                    className="hidden"
                                 />
                             </div>
 
@@ -312,7 +413,7 @@ export default function AdminPortfolioPage() {
                                 />
                             </div>
                         </div>
-                        <div className="p-6 border-t border-dark-600 flex gap-3">
+                        <div className="p-6 border-t border-dark-600 flex gap-3 sticky bottom-0 bg-dark-800">
                             <button
                                 onClick={() => setShowModal(false)}
                                 className="flex-1 px-4 py-2.5 rounded-xl bg-dark-700 text-dark-200 hover:bg-dark-600 text-sm font-medium"

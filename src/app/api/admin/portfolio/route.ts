@@ -25,14 +25,14 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabase();
     const body = await req.json();
 
-    const { ambiente, titulo, descricao, imagem_url, ordem = 0 } = body;
+    const { ambiente, titulo, descricao, imagem_url, imagens = [], ordem = 0 } = body;
     if (!ambiente || !titulo || !descricao || !imagem_url) {
         return NextResponse.json({ error: 'Campos obrigatórios: ambiente, titulo, descricao, imagem_url' }, { status: 400 });
     }
 
     const { data, error } = await supabase
         .from('portfolio_projects')
-        .insert({ ambiente, titulo, descricao, imagem_url, ordem })
+        .insert({ ambiente, titulo, descricao, imagem_url, imagens, ordem })
         .select()
         .single();
 
