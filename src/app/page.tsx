@@ -5,6 +5,7 @@ import {
   ChevronDown, MessageCircle
 } from 'lucide-react';
 import { generateWhatsAppLink } from '@/lib/whatsapp';
+import Showroom3D from '@/components/home/Showroom3D';
 
 const ambientes = [
   { icon: ChefHat, nome: 'Cozinha', desc: 'Armários, bancadas e despensas sob medida' },
@@ -50,8 +51,13 @@ const faqItems = [
 export default function HomePage() {
   return (
     <div className="overflow-x-hidden">
+      {/* SHOWROOM 3D */}
+      <div className="bg-white pt-20">
+        <Showroom3D />
+      </div>
+
       {/* HERO */}
-      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-wood-50 via-white to-gold-50 pt-20">
+      <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-wood-50 via-white to-gold-50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(139,69,19,0.05)_0%,transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(212,165,116,0.08)_0%,transparent_50%)]" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 text-center">
