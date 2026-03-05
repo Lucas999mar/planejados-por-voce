@@ -59,3 +59,34 @@ export interface LeadData {
     dispositivo?: string;
     origem_utm?: Record<string, string>;
 }
+
+export interface AnalyticsEvent {
+    id: string;
+    visitor_id: string;
+    session_id: string;
+    event_type: 'page_view' | 'click' | 'scroll' | 'form_start' | 'form_submit' | 'whatsapp_click';
+    page_url: string;
+    element_id: string | null;
+    element_text: string | null;
+    metadata: Record<string, unknown> | null;
+    lead_id: string | null;
+    created_at: string;
+}
+
+export interface AnalyticsStats {
+    visitorsTotal: number;
+    pageViewsTotal: number;
+    avgTimeOnSite: number;
+    conversionRate: number;
+    dailyVisitors: Array<{ date: string; visitors: number; pageViews: number }>;
+    topPages: Array<{ page: string; views: number }>;
+    topClicks: Array<{ element_id: string; element_text: string; clicks: number }>;
+    deviceBreakdown: Record<string, number>;
+    referrerBreakdown: Record<string, number>;
+    funnel: {
+        visited: number;
+        multiPage: number;
+        clickedCta: number;
+        converted: number;
+    };
+}

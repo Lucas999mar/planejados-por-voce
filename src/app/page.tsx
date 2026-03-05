@@ -80,6 +80,8 @@ export default function HomePage() {
               href={generateWhatsAppLink()}
               target="_blank"
               rel="noopener noreferrer"
+              data-track="whatsapp-hero"
+              data-track-label="Pedir Orçamento no WhatsApp"
               className="group flex items-center gap-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-xl hover:shadow-2xl hover:from-accent-600 hover:to-accent-700 transition-all"
             >
               <Phone size={22} />
@@ -88,6 +90,8 @@ export default function HomePage() {
             </a>
             <Link
               href="/orcamento"
+              data-track="orcamento-hero"
+              data-track-label="Orçamento Online"
               className="flex items-center gap-2 bg-white text-wood-700 px-8 py-4 rounded-full text-lg font-semibold border-2 border-wood-200 hover:border-wood-400 transition-all shadow-lg"
             >
               <MessageCircle size={20} />
@@ -131,6 +135,8 @@ export default function HomePage() {
                 href={generateWhatsAppLink({ tipo_servico: 'planejados', ambiente: amb.nome })}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-track={`card-${amb.nome.toLowerCase().replace(/\s/g, '-')}`}
+                data-track-label={`Serviço: ${amb.nome}`}
                 className="group bg-wood-50 hover:bg-gradient-to-br hover:from-wood-600 hover:to-wood-700 p-6 rounded-2xl transition-all duration-300 cursor-pointer border border-wood-100 hover:border-transparent hover:shadow-xl"
               >
                 <amb.icon size={32} className="text-wood-500 group-hover:text-white transition-colors mb-3" />
@@ -154,6 +160,8 @@ export default function HomePage() {
               href={generateWhatsAppLink({ tipo_servico: 'assistencia' })}
               target="_blank"
               rel="noopener noreferrer"
+              data-track="whatsapp-assistencia"
+              data-track-label="Solicitar Assistência"
               className="flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 text-white px-6 py-3 rounded-full font-semibold hover:from-gold-600 hover:to-gold-700 transition-all shadow-lg whitespace-nowrap"
             >
               <Phone size={18} />
@@ -300,6 +308,8 @@ export default function HomePage() {
               href={generateWhatsAppLink()}
               target="_blank"
               rel="noopener noreferrer"
+              data-track="whatsapp-cta-final"
+              data-track-label="Falar no WhatsApp Agora"
               className="group flex items-center gap-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-xl hover:shadow-2xl hover:from-accent-600 hover:to-accent-700 transition-all"
             >
               <Phone size={22} />
@@ -308,6 +318,8 @@ export default function HomePage() {
             </a>
             <Link
               href="/orcamento"
+              data-track="orcamento-cta-final"
+              data-track-label="Preencher Formulário Online"
               className="flex items-center gap-2 text-wood-200 hover:text-white px-6 py-4 rounded-full text-lg font-medium border border-wood-500 hover:border-white transition-all"
             >
               Preencher Formulário Online

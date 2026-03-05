@@ -38,6 +38,8 @@ export default function PortfolioPage() {
                         href={generateWhatsAppLink({ descricao: 'Vi o portfólio no site e gostaria de um projeto sob medida' })}
                         target="_blank"
                         rel="noopener noreferrer"
+                        data-track="whatsapp-portfolio-cta"
+                        data-track-label="Enviar Inspiração no WhatsApp"
                         className="inline-flex items-center gap-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
                     >
                         <Phone size={22} />

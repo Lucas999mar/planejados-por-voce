@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-    LayoutDashboard, Users, LogOut, Menu, X, Image as ImageIcon, Settings, FileText
+    LayoutDashboard, Users, LogOut, Menu, X, Image as ImageIcon, Settings, FileText, BarChart3
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -44,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
+        { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
         { icon: Users, label: 'Leads', href: '/admin/leads' },
         { icon: ImageIcon, label: 'Portfólio', href: '/admin/portfolio' },
         { icon: FileText, label: 'Conteúdo', href: '/admin/conteudo' },

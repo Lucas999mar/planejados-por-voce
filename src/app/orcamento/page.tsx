@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Phone, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { generateWhatsAppLink } from '@/lib/whatsapp';
 import { AMBIENTES, FAIXAS_ORCAMENTO, URGENCIAS, PROBLEMAS_ASSISTENCIA } from '@/lib/constants';
+import { trackFormStart, trackFormSubmit } from '@/lib/analytics';
 
 interface FormData {
     tipo_servico: string;
@@ -31,6 +32,7 @@ export default function OrcamentoPage() {
     });
 
     const update = (field: keyof FormData, value: string | boolean) => {
+        if (step === 1 && field === 'tipo_servico') trackFormStart();
         setForm(prev => ({ ...prev, [field]: value }));
     };
 
@@ -52,8 +54,10 @@ export default function OrcamentoPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...form, tags, pagina_origem: '/orcamento' }),
             });
+            trackFormSubmit();
             setSubmitted(true);
         } catch {
+            trackFormSubmit();
             // Still allow WhatsApp redirect even if API fails
             setSubmitted(true);
         } finally {
@@ -89,6 +93,8 @@ export default function OrcamentoPage() {
                         href={waLink}
                         target="_blank"
                         rel="noopener noreferrer"
+                        data-track="whatsapp-orcamento-finish"
+                        data-track-label="Enviar no WhatsApp (Finalizado)"
                         className="inline-flex items-center gap-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
                     >
                         <Phone size={22} />
@@ -133,9 +139,11 @@ export default function OrcamentoPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <button
                                     onClick={() => update('tipo_servico', 'planejados')}
+                                    data-track="orcamento-select-planejados"
+                                    data-track-label="Selecionou Planejados"
                                     className={`p-6 rounded-xl border-2 text-left transition-all ${form.tipo_servico === 'planejados'
-                                            ? 'border-wood-500 bg-wood-50 shadow-lg'
-                                            : 'border-wood-100 hover:border-wood-300'
+                                        ? 'border-wood-500 bg-wood-50 shadow-lg'
+                                        : 'border-wood-100 hover:border-wood-300'
                                         }`}
                                 >
                                     <div className="text-3xl mb-2">🪑</div>
@@ -144,9 +152,11 @@ export default function OrcamentoPage() {
                                 </button>
                                 <button
                                     onClick={() => update('tipo_servico', 'assistencia')}
+                                    data-track="orcamento-select-assistencia"
+                                    data-track-label="Selecionou Assistência"
                                     className={`p-6 rounded-xl border-2 text-left transition-all ${form.tipo_servico === 'assistencia'
-                                            ? 'border-gold-500 bg-gold-50 shadow-lg'
-                                            : 'border-wood-100 hover:border-wood-300'
+                                        ? 'border-gold-500 bg-gold-50 shadow-lg'
+                                        : 'border-wood-100 hover:border-wood-300'
                                         }`}
                                 >
                                     <div className="text-3xl mb-2">🔧</div>
@@ -172,8 +182,8 @@ export default function OrcamentoPage() {
                                                 key={amb}
                                                 onClick={() => update('ambiente', amb)}
                                                 className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${form.ambiente === amb
-                                                        ? 'bg-wood-600 text-white shadow'
-                                                        : 'bg-wood-50 text-wood-600 hover:bg-wood-100'
+                                                    ? 'bg-wood-600 text-white shadow'
+                                                    : 'bg-wood-50 text-wood-600 hover:bg-wood-100'
                                                     }`}
                                             >
                                                 {amb}

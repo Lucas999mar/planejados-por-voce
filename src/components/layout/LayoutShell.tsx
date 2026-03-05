@@ -5,6 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import WhatsAppFloat from './WhatsAppFloat';
 import ChatWidget from '@/components/chat/ChatWidget';
+import AnalyticsProvider from '@/components/analytics/AnalyticsProvider';
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -15,12 +16,12 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     }
 
     return (
-        <>
+        <AnalyticsProvider>
             <Header />
             <main>{children}</main>
             <Footer />
             <WhatsAppFloat />
             <ChatWidget />
-        </>
+        </AnalyticsProvider>
     );
 }

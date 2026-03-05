@@ -120,7 +120,37 @@ async function setupTables() {
         }
     }
 
-    // 4. Storage bucket
+    // 4. Analytics Events - check if exists
+    console.log('📦 Checking analytics_events...');
+    const { error: analyticsCheckError } = await supabase.from('analytics_events').select('id').limit(1);
+    if (analyticsCheckError && analyticsCheckError.code === '42P01') {
+        console.log('  Table does not exist yet - needs SQL creation via dashboard');
+        console.log('  Run this SQL in the Supabase SQL Editor:');
+        console.log(`
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    visitor_id TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    event_type TEXT NOT NULL CHECK (event_type IN ('page_view','click','scroll','form_start','form_submit','whatsapp_click')),
+    page_url TEXT DEFAULT '/',
+    element_id TEXT,
+    element_text TEXT,
+    metadata JSONB,
+    lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_analytics_visitor ON analytics_events(visitor_id);
+CREATE INDEX idx_analytics_session ON analytics_events(session_id);
+CREATE INDEX idx_analytics_type ON analytics_events(event_type);
+CREATE INDEX idx_analytics_created ON analytics_events(created_at DESC);
+CREATE INDEX idx_analytics_page ON analytics_events(page_url);
+        `);
+    } else {
+        console.log('  ✅ analytics_events table exists');
+    }
+
+    // 5. Storage bucket
     console.log('📦 Creating storage bucket...');
     const { error: bucketError } = await supabase.storage.createBucket('portfolio-images', {
         public: true,

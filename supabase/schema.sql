@@ -93,3 +93,33 @@ CREATE POLICY "Anon can insert conversations" ON conversations
 
 CREATE POLICY "Anon can insert messages" ON messages
   FOR INSERT WITH CHECK (true);
+
+-- Analytics events table
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  visitor_id TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  event_type TEXT NOT NULL CHECK (event_type IN ('page_view','click','scroll','form_start','form_submit','whatsapp_click')),
+  page_url TEXT DEFAULT '/',
+  element_id TEXT,
+  element_text TEXT,
+  metadata JSONB,
+  lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Analytics Indexes
+CREATE INDEX IF NOT EXISTS idx_analytics_visitor ON analytics_events(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_session ON analytics_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_type ON analytics_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_analytics_created ON analytics_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_page ON analytics_events(page_url);
+
+-- RLS for analytics
+ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access on analytics" ON analytics_events
+  FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Anon can insert analytics" ON analytics_events
+  FOR INSERT WITH CHECK (true);
