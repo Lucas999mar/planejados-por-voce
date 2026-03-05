@@ -60,15 +60,34 @@ export default function PortfolioGrid() {
                 const res = await fetch('/api/portfolio');
                 const data = await res.json();
                 if (data.projects && data.projects.length > 0) {
-                    setProjetos(data.projects.map((p: any) => ({
-                        id: p.id,
-                        ambiente: p.ambiente,
-                        titulo: p.titulo,
-                        descricao: p.descricao,
-                        imagem_url: p.imagem_url,
-                        imagens: Array.isArray(p.imagens) ? p.imagens : [],
-                        ordem: p.ordem,
-                    })));
+                    setProjetos(data.projects.map((p: any) => {
+                        let parsedImagens: string[] = [];
+                        try {
+                            if (Array.isArray(p.imagens)) {
+                                parsedImagens = p.imagens;
+                            } else if (typeof p.imagens === 'string' && p.imagens) {
+                                // Handle PostgreSQL array format/text: {url1,url2}
+                                const cleaned = p.imagens.replace(/^\{(.*)\}$/, '$1');
+                                if (cleaned) {
+                                    parsedImagens = cleaned.split(',').map((s: string) => s.trim().replace(/^"(.*)"$/, '$1'));
+                                }
+                            } else if (p.imagens && typeof p.imagens === 'object') {
+                                parsedImagens = Object.values(p.imagens).filter(v => typeof v === 'string') as string[];
+                            }
+                        } catch (e) {
+                            console.error('Error parsing gallery images for project', p.id, e);
+                        }
+
+                        return {
+                            id: p.id,
+                            ambiente: p.ambiente,
+                            titulo: p.titulo,
+                            descricao: p.descricao,
+                            imagem_url: p.imagem_url,
+                            imagens: Array.isArray(parsedImagens) ? parsedImagens : [],
+                            ordem: p.ordem,
+                        };
+                    }));
                     if (data.categories && data.categories.length > 0) {
                         setCategorias(['Todos', ...data.categories.map((c: any) => c.nome)]);
                     }
@@ -120,8 +139,8 @@ export default function PortfolioGrid() {
                                 key={cat}
                                 onClick={() => setFiltroAtivo(cat)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${filtroAtivo === cat
-                                        ? 'bg-wood-600 text-white shadow-md'
-                                        : 'bg-wood-50 text-wood-600 hover:bg-wood-100'
+                                    ? 'bg-wood-600 text-white shadow-md'
+                                    : 'bg-wood-50 text-wood-600 hover:bg-wood-100'
                                     }`}
                             >
                                 {cat}
@@ -181,6 +200,8 @@ export default function PortfolioGrid() {
                                                 href={generateWhatsAppLink({ tipo_servico: 'planejados', ambiente: projeto.ambiente, descricao: `Quero um projeto parecido com: ${projeto.titulo}` })}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
+                                                data-track={`portfolio-whatsapp-${projeto.ambiente.toLowerCase()}`}
+                                                data-track-label={`Quero um projeto parecido: ${projeto.titulo}`}
                                                 className="mt-3 inline-flex items-center gap-2 text-wood-600 hover:text-wood-700 text-sm font-medium"
                                             >
                                                 <Phone size={14} />
@@ -221,6 +242,8 @@ export default function PortfolioGrid() {
                                 href={generateWhatsAppLink({ tipo_servico: 'planejados', ambiente: lightbox.projeto.ambiente, descricao: `Quero um projeto parecido com: ${lightbox.projeto.titulo}` })}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                data-track={`lightbox-whatsapp-${lightbox.projeto.ambiente.toLowerCase()}`}
+                                data-track-label={`Quero um projeto parecido: ${lightbox.projeto.titulo} (Lightbox)`}
                                 className="mt-3 inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg transition-colors"
                                 onClick={e => e.stopPropagation()}
                             >

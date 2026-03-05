@@ -18,7 +18,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         if (isLoginPage) return;
         const token = localStorage.getItem('admin_token');
-        if (!token) {
+        if (!token || token === 'null' || token === 'undefined') {
+            localStorage.removeItem('admin_token');
             router.push('/admin/login');
         } else {
             setAuthenticated(true);

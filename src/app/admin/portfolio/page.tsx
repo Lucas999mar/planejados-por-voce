@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Pencil, Trash2, Upload, X, Loader2, Save, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, X, Loader2, Save, Image as ImageIcon } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -43,9 +43,19 @@ export default function AdminPortfolioPage() {
 
     useEffect(() => { loadProjects(); }, []);
 
-    function authHeaders() {
+    function authHeaders(): Record<string, string> {
         const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
-        return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token && token !== 'null' && token !== 'undefined') {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+
+    function handleUnauthorized() {
+        alert('Sessão expirada ou inválida. Por favor, faça login novamente.');
+        localStorage.removeItem('admin_token');
+        window.location.href = '/admin/login';
     }
 
     async function loadProjects() {
@@ -53,10 +63,30 @@ export default function AdminPortfolioPage() {
         try {
             const res = await fetch('/api/admin/portfolio');
             const data = await res.json();
-            setProjects(Array.isArray(data) ? data.map((p: any) => ({
-                ...p,
-                imagens: Array.isArray(p.imagens) ? p.imagens : [],
-            })) : []);
+
+            setProjects(Array.isArray(data) ? data.map((p: any) => {
+                let parsedImagens: string[] = [];
+                try {
+                    if (Array.isArray(p.imagens)) {
+                        parsedImagens = p.imagens;
+                    } else if (typeof p.imagens === 'string' && p.imagens) {
+                        // Handle PostgreSQL array format/text: {url1,url2}
+                        const cleaned = p.imagens.replace(/^\{(.*)\}$/, '$1');
+                        if (cleaned) {
+                            parsedImagens = cleaned.split(',').map((s: string) => s.trim().replace(/^"(.*)"$/, '$1'));
+                        }
+                    } else if (p.imagens && typeof p.imagens === 'object') {
+                        parsedImagens = Object.values(p.imagens).filter(v => typeof v === 'string') as string[];
+                    }
+                } catch (e) {
+                    console.error('Error parsing gallery images for project', p.id, e);
+                }
+
+                return {
+                    ...p,
+                    imagens: Array.isArray(parsedImagens) ? parsedImagens : [],
+                };
+            }) : []);
         } catch (e) { console.error(e); }
         setLoading(false);
     }
@@ -84,40 +114,78 @@ export default function AdminPortfolioPage() {
         if (!form.titulo || !form.descricao || !form.imagem_url) return;
         setSaving(true);
         try {
+            // Ensure images is always an array of strings
+            const finalForm = {
+                ...form,
+                imagens: Array.isArray(form.imagens) ? form.imagens.filter(img => typeof img === 'string' && img.startsWith('http')) : []
+            };
+
+            let res;
             if (editingProject) {
-                await fetch('/api/admin/portfolio', {
+                res = await fetch('/api/admin/portfolio', {
                     method: 'PUT',
                     headers: authHeaders(),
-                    body: JSON.stringify({ id: editingProject.id, ...form }),
+                    body: JSON.stringify({ id: editingProject.id, ...finalForm }),
                 });
             } else {
-                await fetch('/api/admin/portfolio', {
+                res = await fetch('/api/admin/portfolio', {
                     method: 'POST',
                     headers: authHeaders(),
-                    body: JSON.stringify(form),
+                    body: JSON.stringify(finalForm),
                 });
             }
+
+            if (res.status === 401) {
+                handleUnauthorized();
+                return;
+            }
+
+            const data = await res.json();
+            if (!res.ok) {
+                alert(`Erro ao salvar: ${data.error || 'Erro desconhecido'}`);
+                setSaving(false);
+                return;
+            }
+
             setShowModal(false);
             await loadProjects();
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão ao salvar. Verifique sua internet.');
+        }
         setSaving(false);
     }
 
     async function handleDelete(id: string) {
+        if (!confirm('Tem certeza que deseja excluir este projeto?')) return;
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
-            await fetch(`/api/admin/portfolio?id=${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            const res = await fetch(`/api/admin/portfolio?id=${id}`, {
+                method: 'DELETE',
+                headers: authHeaders()
+            });
+
+            if (res.status === 401) {
+                handleUnauthorized();
+                return;
+            }
+
             setDeleteConfirm(null);
             await loadProjects();
         } catch (e) { console.error(e); }
     }
 
     async function handleToggleActive(p: Project) {
-        await fetch('/api/admin/portfolio', {
+        const res = await fetch('/api/admin/portfolio', {
             method: 'PUT',
             headers: authHeaders(),
             body: JSON.stringify({ id: p.id, ativo: !p.ativo }),
         });
+
+        if (res.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
         await loadProjects();
     }
 
@@ -128,12 +196,29 @@ export default function AdminPortfolioPage() {
         try {
             const fd = new FormData();
             fd.append('file', file);
-            const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+
+            const headers = authHeaders();
+            const res = await fetch('/api/admin/upload', {
+                method: 'POST',
+                headers: { 'Authorization': headers.Authorization || '' },
+                body: fd
+            });
+
+            if (res.status === 401) {
+                handleUnauthorized();
+                return;
+            }
+
             const data = await res.json();
             if (data.url) {
                 setForm(prev => ({ ...prev, imagem_url: data.url }));
+            } else if (data.error) {
+                alert(`Erro no upload: ${data.error}`);
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão no upload.');
+        }
         setUploading(false);
     }
 
@@ -143,15 +228,36 @@ export default function AdminPortfolioPage() {
         setUploadingGallery(true);
         try {
             const newUrls: string[] = [];
+            const headers = authHeaders();
+
             for (let i = 0; i < files.length; i++) {
                 const fd = new FormData();
                 fd.append('file', files[i]);
-                const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+                const res = await fetch('/api/admin/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': headers.Authorization || '' },
+                    body: fd
+                });
+
+                if (res.status === 401) {
+                    handleUnauthorized();
+                    return;
+                }
+
                 const data = await res.json();
-                if (data.url) newUrls.push(data.url);
+                if (data.url) {
+                    newUrls.push(data.url);
+                } else if (data.error) {
+                    alert(`Erro ao enviar foto "${files[i].name}": ${data.error}`);
+                }
             }
-            setForm(prev => ({ ...prev, imagens: [...prev.imagens, ...newUrls] }));
-        } catch (e) { console.error(e); }
+            if (newUrls.length > 0) {
+                setForm(prev => ({ ...prev, imagens: [...prev.imagens, ...newUrls] }));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão ao enviar fotos.');
+        }
         setUploadingGallery(false);
         if (galleryInputRef.current) galleryInputRef.current.value = '';
     }
@@ -187,7 +293,6 @@ export default function AdminPortfolioPage() {
                 </button>
             </div>
 
-            {/* Projects Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {projects.map((p) => (
                     <div key={p.id} className={`bg-dark-800 rounded-2xl overflow-hidden border transition-all ${p.ativo ? 'border-dark-600' : 'border-red-900/30 opacity-60'}`}>
@@ -246,7 +351,6 @@ export default function AdminPortfolioPage() {
                 </div>
             )}
 
-            {/* Delete Confirmation */}
             {deleteConfirm && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
                     <div className="bg-dark-800 rounded-2xl p-6 max-w-sm w-full border border-dark-600" onClick={e => e.stopPropagation()}>
@@ -260,7 +364,6 @@ export default function AdminPortfolioPage() {
                 </div>
             )}
 
-            {/* Add/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
                     <div className="bg-dark-800 rounded-2xl max-w-2xl w-full border border-dark-600 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -271,7 +374,6 @@ export default function AdminPortfolioPage() {
                             <button onClick={() => setShowModal(false)} className="text-dark-400 hover:text-white"><X size={20} /></button>
                         </div>
                         <div className="p-6 space-y-5">
-                            {/* Main Image */}
                             <div>
                                 <label className="text-dark-200 text-sm font-medium block mb-2">Imagem Principal</label>
                                 {form.imagem_url ? (
@@ -316,35 +418,29 @@ export default function AdminPortfolioPage() {
                                 />
                             </div>
 
-                            {/* Gallery Images */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="text-dark-200 text-sm font-medium">Galeria de Fotos</label>
                                     <span className="text-dark-400 text-xs">{form.imagens.length} fotos adicionais</span>
                                 </div>
-                                <p className="text-dark-500 text-xs mb-3">Adicione mais fotos deste ambiente para seus clientes visualizarem</p>
+                                <p className="text-dark-500 text-xs mb-3">Adicione fotos deste ambiente</p>
 
-                                {/* Gallery grid */}
                                 {form.imagens.length > 0 && (
                                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
                                         {form.imagens.map((url, index) => (
                                             <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-dark-700 group">
-                                                <img src={url} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                                                <img src={url} alt="" className="w-full h-full object-cover" />
                                                 <button
                                                     onClick={() => removeGalleryImage(index)}
-                                                    className="absolute top-1 right-1 bg-red-600/90 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
                                                     <X size={10} />
                                                 </button>
-                                                <div className="absolute bottom-1 left-1 bg-dark-900/70 text-white text-[10px] px-1.5 py-0.5 rounded">
-                                                    {index + 1}
-                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
 
-                                {/* Upload more button */}
                                 <button
                                     onClick={() => galleryInputRef.current?.click()}
                                     disabled={uploadingGallery}
@@ -353,12 +449,12 @@ export default function AdminPortfolioPage() {
                                     {uploadingGallery ? (
                                         <div className="flex items-center justify-center gap-2">
                                             <Loader2 size={18} className="animate-spin text-wood-500" />
-                                            <span className="text-dark-300 text-sm">Enviando fotos...</span>
+                                            <span className="text-dark-300 text-sm">Enviando...</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-center gap-2">
-                                            <Plus size={18} className="text-dark-400" />
-                                            <span className="text-dark-300 text-sm">Adicionar mais fotos</span>
+                                            <Upload size={18} className="text-dark-400" />
+                                            <span className="text-dark-300 text-sm">Adicionar fotos à galeria</span>
                                         </div>
                                     )}
                                 </button>
@@ -372,7 +468,6 @@ export default function AdminPortfolioPage() {
                                 />
                             </div>
 
-                            {/* Ambiente */}
                             <div>
                                 <label className="text-dark-200 text-sm font-medium block mb-2">Ambiente</label>
                                 <select
@@ -384,33 +479,30 @@ export default function AdminPortfolioPage() {
                                 </select>
                             </div>
 
-                            {/* Título */}
                             <div>
                                 <label className="text-dark-200 text-sm font-medium block mb-2">Título</label>
                                 <input
                                     type="text"
                                     value={form.titulo}
                                     onChange={e => setForm(prev => ({ ...prev, titulo: e.target.value }))}
-                                    placeholder="Ex: Cozinha Moderna Cinza"
-                                    className="w-full bg-dark-700 border border-dark-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-dark-400 focus:border-wood-500 focus:outline-none"
+                                    placeholder="Ex: Cozinha Planejada"
+                                    className="w-full bg-dark-700 border border-dark-500 rounded-xl px-4 py-2.5 text-sm text-white focus:border-wood-500 focus:outline-none"
                                 />
                             </div>
 
-                            {/* Descrição */}
                             <div>
                                 <label className="text-dark-200 text-sm font-medium block mb-2">Descrição</label>
                                 <textarea
                                     value={form.descricao}
                                     onChange={e => setForm(prev => ({ ...prev, descricao: e.target.value }))}
-                                    placeholder="Descreva o projeto..."
+                                    placeholder="Descrição do projeto..."
                                     rows={3}
-                                    className="w-full bg-dark-700 border border-dark-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-dark-400 focus:border-wood-500 focus:outline-none resize-none"
+                                    className="w-full bg-dark-700 border border-dark-500 rounded-xl px-4 py-2.5 text-sm text-white focus:border-wood-500 focus:outline-none resize-none"
                                 />
                             </div>
 
-                            {/* Ordem */}
                             <div>
-                                <label className="text-dark-200 text-sm font-medium block mb-2">Ordem de exibição</label>
+                                <label className="text-dark-200 text-sm font-medium block mb-2">Ordem</label>
                                 <input
                                     type="number"
                                     value={form.ordem}
@@ -428,11 +520,11 @@ export default function AdminPortfolioPage() {
                             </button>
                             <button
                                 onClick={handleSave}
-                                disabled={saving || !form.titulo || !form.descricao || !form.imagem_url}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-wood-600 text-white hover:bg-wood-500 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={saving}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-wood-600 text-white hover:bg-wood-500 text-sm font-medium disabled:opacity-50"
                             >
                                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                {editingProject ? 'Salvar Alterações' : 'Criar Projeto'}
+                                {editingProject ? 'Salvar' : 'Criar'}
                             </button>
                         </div>
                     </div>

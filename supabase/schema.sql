@@ -123,3 +123,46 @@ CREATE POLICY "Service role full access on analytics" ON analytics_events
 
 CREATE POLICY "Anon can insert analytics" ON analytics_events
   FOR INSERT WITH CHECK (true);
+-- Portfolio Categories table
+CREATE TABLE IF NOT EXISTS portfolio_categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  nome TEXT NOT NULL UNIQUE,
+  ordem INTEGER DEFAULT 0,
+  ativo BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Portfolio Projects table
+CREATE TABLE IF NOT EXISTS portfolio_projects (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  ambiente TEXT NOT NULL,
+  titulo TEXT NOT NULL,
+  descricao TEXT,
+  imagem_url TEXT NOT NULL,
+  imagens TEXT[] DEFAULT '{}',
+  ordem INTEGER DEFAULT 0,
+  ativo BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for portfolio
+CREATE INDEX IF NOT EXISTS idx_portfolio_projects_ambiente ON portfolio_projects(ambiente);
+CREATE INDEX IF NOT EXISTS idx_portfolio_projects_ativo ON portfolio_projects(ativo);
+CREATE INDEX IF NOT EXISTS idx_portfolio_projects_ordem ON portfolio_projects(ordem);
+
+-- RLS for portfolio
+ALTER TABLE portfolio_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE portfolio_projects ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read on portfolio_categories" ON portfolio_categories
+  FOR SELECT USING (true);
+
+CREATE POLICY "Public read on portfolio_projects" ON portfolio_projects
+  FOR SELECT USING (ativo = true);
+
+CREATE POLICY "Service role full access on portfolio_categories" ON portfolio_categories
+  FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Service role full access on portfolio_projects" ON portfolio_projects
+  FOR ALL USING (auth.role() = 'service_role');

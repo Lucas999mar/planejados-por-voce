@@ -34,6 +34,8 @@ export default function ContatoPage() {
                                     href={generateWhatsAppLink()}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    data-track="whatsapp-contato-main"
+                                    data-track-label="WhatsApp Contato (Principal)"
                                     className="flex items-center gap-4 p-5 bg-accent-50 rounded-2xl border border-accent-100 hover:shadow-lg transition-shadow group"
                                 >
                                     <div className="w-14 h-14 bg-accent-500 rounded-xl flex items-center justify-center shrink-0">
@@ -114,6 +116,8 @@ export default function ContatoPage() {
                                     href={generateWhatsAppLink()}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    data-track="whatsapp-contato-form"
+                                    data-track-label="WhatsApp Contato (Formulário)"
                                     className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-6 py-3 rounded-full font-semibold hover:from-accent-600 hover:to-accent-700 transition-all shadow-lg"
                                 >
                                     <MessageSquare size={18} />

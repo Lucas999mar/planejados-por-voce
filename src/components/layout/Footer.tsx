@@ -58,6 +58,8 @@ export default function Footer() {
                                 href={generateWhatsAppLink()}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                data-track="whatsapp-footer"
+                                data-track-label="WhatsApp footer"
                                 className="flex items-center gap-2 text-sm text-dark-200 hover:text-green-400 transition-colors"
                             >
                                 <Phone size={16} />

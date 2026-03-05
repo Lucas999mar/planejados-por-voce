@@ -159,8 +159,8 @@ export default function ChatWidget() {
                                 <div key={i} className={`chat-bubble flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div
                                         className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
-                                                ? 'bg-gradient-to-br from-wood-600 to-wood-700 text-white rounded-br-md'
-                                                : 'bg-white text-dark-700 shadow-sm border border-wood-100 rounded-bl-md'
+                                            ? 'bg-gradient-to-br from-wood-600 to-wood-700 text-white rounded-br-md'
+                                            : 'bg-white text-dark-700 shadow-sm border border-wood-100 rounded-bl-md'
                                             }`}
                                     >
                                         {renderContent(msg.content)}
@@ -182,6 +182,8 @@ export default function ChatWidget() {
                                 href={generateWhatsAppLink()}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                data-track="whatsapp-chat"
+                                data-track-label="WhatsApp chat shortcut"
                                 className="flex items-center justify-center gap-2 text-accent-700 text-xs font-medium hover:text-accent-800 transition-colors"
                             >
                                 <ExternalLink size={12} />

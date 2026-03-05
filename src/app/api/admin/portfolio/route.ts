@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabase
         .from('portfolio_projects')
-        .insert({ ambiente, titulo, descricao, imagem_url, imagens, ordem })
+        .insert({ ambiente, titulo, descricao, imagem_url, imagens, ordem, ativo: true })
         .select()
         .single();
 

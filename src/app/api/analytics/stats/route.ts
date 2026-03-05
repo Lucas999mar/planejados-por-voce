@@ -169,18 +169,26 @@ export async function GET(req: NextRequest) {
 
         const conversionRate = visitorsTotal > 0 ? Math.round((converted / visitorsTotal) * 100) : 0;
 
-        return NextResponse.json({
-            visitorsTotal,
-            pageViewsTotal,
-            avgTimeOnSite,
-            conversionRate,
-            dailyVisitors,
-            topPages,
-            topClicks,
-            deviceBreakdown: deviceCounts,
-            referrerBreakdown: referrerCounts,
-            funnel: { visited, multiPage, clickedCta, converted },
-        });
+        // Ensure we always have a valid structure
+        const responseData = {
+            visitorsTotal: visitorsTotal || 0,
+            pageViewsTotal: pageViewsTotal || 0,
+            avgTimeOnSite: avgTimeOnSite || 0,
+            conversionRate: conversionRate || 0,
+            dailyVisitors: dailyVisitors && dailyVisitors.length > 0 ? dailyVisitors : [],
+            topPages: topPages || [],
+            topClicks: topClicks || [],
+            deviceBreakdown: deviceCounts || {},
+            referrerBreakdown: referrerCounts || {},
+            funnel: {
+                visited: visited || 0,
+                multiPage: multiPage || 0,
+                clickedCta: clickedCta || 0,
+                converted: converted || 0
+            },
+        };
+
+        return NextResponse.json(responseData);
     } catch (error) {
         console.error('Analytics stats API error:', error);
         return NextResponse.json({ error: 'Internal error' }, { status: 500 });

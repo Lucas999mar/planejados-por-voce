@@ -52,10 +52,24 @@ export default function AnalyticsProvider({ children }: { children: React.ReactN
 
                 // Check if it's a WhatsApp link
                 const href = trackEl.getAttribute('href') || '';
-                if (href.includes('wa.me') || href.includes('whatsapp')) {
+                const isWhatsApp = href.includes('wa.me') || href.includes('whatsapp.com');
+
+                if (isWhatsApp) {
                     trackWhatsAppClick(trackId, trackText);
                 } else {
                     trackClick(trackId, trackText);
+                }
+            } else {
+                // FALLBACK: Auto-track any WhatsApp link even without data-track
+                const link = target.closest('a');
+                if (link) {
+                    const href = link.getAttribute('href') || '';
+                    if (href.includes('wa.me') || href.includes('whatsapp.com')) {
+                        const trackId = link.id || 'whatsapp-auto';
+                        const trackText = link.getAttribute('data-track-label') ||
+                            link.textContent?.trim().slice(0, 80) || 'WhatsApp Link';
+                        trackWhatsAppClick(trackId, trackText);
+                    }
                 }
             }
         };

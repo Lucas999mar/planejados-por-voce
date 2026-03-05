@@ -43,6 +43,8 @@ export default function Header() {
                             href={generateWhatsAppLink()}
                             target="_blank"
                             rel="noopener noreferrer"
+                            data-track="whatsapp-header"
+                            data-track-label="Falar no WhatsApp (Header)"
                             className="hidden md:flex items-center gap-2 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:from-accent-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl"
                         >
                             <Phone size={16} />
@@ -77,6 +79,8 @@ export default function Header() {
                             href={generateWhatsAppLink()}
                             target="_blank"
                             rel="noopener noreferrer"
+                            data-track="whatsapp-header-mobile"
+                            data-track-label="Falar no WhatsApp (Mobile Menu)"
                             className="flex items-center justify-center gap-2 mt-3 bg-gradient-to-r from-accent-500 to-accent-600 text-white px-5 py-3 rounded-full text-base font-semibold"
                         >
                             <Phone size={18} />
