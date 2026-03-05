@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminToken, isAuthError } from '@/lib/adminAuth';
 
 function getSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -23,8 +24,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data);
 }
 
-// PUT - Update page content
+// PUT - Update page content — PROTECTED
 export async function PUT(req: NextRequest) {
+    const auth = await verifyAdminToken(req);
+    if (isAuthError(auth)) return auth;
+
     const supabase = getSupabase();
     const body = await req.json();
     const { id, section, content } = body;

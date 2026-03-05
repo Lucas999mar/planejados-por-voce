@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminToken, isAuthError } from '@/lib/adminAuth';
 
 function getSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -7,7 +8,11 @@ function getSupabase() {
     return createClient(url, key);
 }
 
+// POST - Upload image — PROTECTED
 export async function POST(req: NextRequest) {
+    const auth = await verifyAdminToken(req);
+    if (isAuthError(auth)) return auth;
+
     const supabase = getSupabase();
 
     try {

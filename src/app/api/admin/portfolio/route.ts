@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminToken, isAuthError } from '@/lib/adminAuth';
 
-function getSupabase(token?: string) {
+function getSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     return createClient(url, key);
 }
 
-// GET - List all projects (admin view, including inactive)
+// GET - List all projects (public read — also used by public portfolio page)
 export async function GET(req: NextRequest) {
     const supabase = getSupabase();
     const { data, error } = await supabase
@@ -20,8 +21,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(data);
 }
 
-// POST - Create a new project
+// POST - Create a new project — PROTECTED
 export async function POST(req: NextRequest) {
+    const auth = await verifyAdminToken(req);
+    if (isAuthError(auth)) return auth;
+
     const supabase = getSupabase();
     const body = await req.json();
 
@@ -40,8 +44,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data, { status: 201 });
 }
 
-// PUT - Update a project
+// PUT - Update a project — PROTECTED
 export async function PUT(req: NextRequest) {
+    const auth = await verifyAdminToken(req);
+    if (isAuthError(auth)) return auth;
+
     const supabase = getSupabase();
     const body = await req.json();
     const { id, ...updates } = body;
@@ -61,8 +68,11 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(data);
 }
 
-// DELETE - Remove a project
+// DELETE - Remove a project — PROTECTED
 export async function DELETE(req: NextRequest) {
+    const auth = await verifyAdminToken(req);
+    if (isAuthError(auth)) return auth;
+
     const supabase = getSupabase();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

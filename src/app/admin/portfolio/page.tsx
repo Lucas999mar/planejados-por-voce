@@ -43,6 +43,11 @@ export default function AdminPortfolioPage() {
 
     useEffect(() => { loadProjects(); }, []);
 
+    function authHeaders() {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+        return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    }
+
     async function loadProjects() {
         setLoading(true);
         try {
@@ -82,13 +87,13 @@ export default function AdminPortfolioPage() {
             if (editingProject) {
                 await fetch('/api/admin/portfolio', {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify({ id: editingProject.id, ...form }),
                 });
             } else {
                 await fetch('/api/admin/portfolio', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify(form),
                 });
             }
@@ -100,7 +105,8 @@ export default function AdminPortfolioPage() {
 
     async function handleDelete(id: string) {
         try {
-            await fetch(`/api/admin/portfolio?id=${id}`, { method: 'DELETE' });
+            const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : '';
+            await fetch(`/api/admin/portfolio?id=${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             setDeleteConfirm(null);
             await loadProjects();
         } catch (e) { console.error(e); }
@@ -109,7 +115,7 @@ export default function AdminPortfolioPage() {
     async function handleToggleActive(p: Project) {
         await fetch('/api/admin/portfolio', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(),
             body: JSON.stringify({ id: p.id, ativo: !p.ativo }),
         });
         await loadProjects();
